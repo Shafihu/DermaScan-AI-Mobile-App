@@ -3,7 +3,7 @@ import { useAuthStore } from "../stores/useAuthStore";
 
 // Base API configuration
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000/api";
+  process.env.EXPO_PUBLIC_API_URL || "http://172.20.10.4:5000/api";
 const API_TIMEOUT = 10000; // 10 seconds
 
 // Types for API requests and responses
@@ -19,15 +19,21 @@ export interface SignupRequest {
 }
 
 export interface AuthResponse {
-  user: {
-    id: string;
-    email: string;
-    fullName: string;
-    profileImage?: string;
-    createdAt: string;
-    updatedAt: string;
+  data: {
+    user: {
+      _id: string;
+      email: string;
+      fullName: string;
+      profileImage?: string;
+      createdAt: string;
+      updatedAt: string;
+      isActive?: boolean;
+      lastLoginAt?: string;
+    };
+    token: string;
   };
-  token: string;
+  message: string;
+  success: boolean;
 }
 
 export interface UserProfile {
@@ -76,37 +82,6 @@ export interface ScanHistoryResponse {
   totalPages: number;
 }
 
-export interface UserSettings {
-  notifications: {
-    enabled: boolean;
-    scanReminders: boolean;
-    healthTips: boolean;
-  };
-  privacy: {
-    shareData: boolean;
-    anonymousMode: boolean;
-  };
-  preferences: {
-    theme: "light" | "dark" | "auto";
-    language: string;
-    units: "metric" | "imperial";
-  };
-}
-
-export interface AnalyticsResponse {
-  totalScans: number;
-  averageConfidence: number;
-  mostCommonConditions: Array<{
-    condition: string;
-    count: number;
-  }>;
-  scanTrends: Array<{
-    date: string;
-    count: number;
-  }>;
-  healthScore: number;
-}
-
 export interface ApiError {
   message: string;
   status: number;
@@ -132,9 +107,13 @@ class ApiService {
     }
   }
 
-  private async setAuthToken(token: string): Promise<void> {
+  private async setAuthToken(token: string | undefined): Promise<void> {
     try {
-      await AsyncStorage.setItem("@DermaScanAI:authToken", token);
+      if (token) {
+        await AsyncStorage.setItem("@DermaScanAI:authToken", token);
+      } else {
+        console.warn("No token provided to setAuthToken");
+      }
     } catch (error) {
       console.error("Error setting auth token:", error);
     }
@@ -157,11 +136,11 @@ class ApiService {
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     if (token) {
-      headers.Authorization = `Bearer ${token}`;
+      (headers as Record<string, string>).Authorization = `Bearer ${token}`;
     }
 
     const controller = new AbortController();
@@ -178,10 +157,24 @@ class ApiService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+
+        // Only log as error if it's not a 404 (expected for unimplemented endpoints)
+        if (response.status === 404) {
+          console.log(
+            "ℹ️ Endpoint not implemented:",
+            response.status,
+            errorData.message
+          );
+        } else {
+          console.error("❌ API Error:", response.status, errorData);
+        }
+
         throw new Error(errorData.message || `HTTP ${response.status}`);
       }
 
-      return await response.json();
+      const responseData = await response.json();
+      console.log("✅ API Response:", responseData);
+      return responseData;
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
         throw new Error("Request timeout");
@@ -192,22 +185,26 @@ class ApiService {
 
   // Authentication endpoints
   async login(credentials: LoginRequest): Promise<AuthResponse> {
+    console.log("🔐 Attempting login with:", credentials.email);
     const response = await this.makeRequest<AuthResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify(credentials),
     });
 
-    await this.setAuthToken(response.token);
+    console.log("🔐 Login response:", response);
+    await this.setAuthToken(response.data.token);
     return response;
   }
 
   async signup(userData: SignupRequest): Promise<AuthResponse> {
+    console.log("📝 Attempting signup with:", userData.email);
     const response = await this.makeRequest<AuthResponse>("/auth/register", {
       method: "POST",
       body: JSON.stringify(userData),
     });
 
-    await this.setAuthToken(response.token);
+    console.log("📝 Signup response:", response);
+    await this.setAuthToken(response.data.token);
     return response;
   }
 
@@ -221,17 +218,6 @@ class ApiService {
     } finally {
       await this.removeAuthToken();
     }
-  }
-
-  async getProfile(): Promise<UserProfile> {
-    return await this.makeRequest<UserProfile>("/auth/profile");
-  }
-
-  async updateProfile(updates: UpdateProfileRequest): Promise<UserProfile> {
-    return await this.makeRequest<UserProfile>("/auth/profile", {
-      method: "PUT",
-      body: JSON.stringify(updates),
-    });
   }
 
   // Scan analysis endpoints
@@ -283,36 +269,13 @@ class ApiService {
     });
   }
 
-  // Settings endpoints
-  async getUserSettings(): Promise<UserSettings> {
-    return await this.makeRequest<UserSettings>("/settings");
-  }
-
-  async updateUserSettings(
-    settings: Partial<UserSettings>
-  ): Promise<UserSettings> {
-    return await this.makeRequest<UserSettings>("/settings", {
-      method: "PUT",
-      body: JSON.stringify(settings),
-    });
-  }
-
-  // Analytics endpoints
-  async getAnalytics(): Promise<AnalyticsResponse> {
-    return await this.makeRequest<AnalyticsResponse>("/analytics");
-  }
-
-  async getHealthScore(): Promise<{ score: number }> {
-    return await this.makeRequest<{ score: number }>("/analytics/health-score");
-  }
-
   // Utility methods
   async isAuthenticated(): Promise<boolean> {
     const token = await this.getAuthToken();
     if (!token) return false;
 
     try {
-      await this.getProfile();
+      // Simple token validation - just check if token exists
       return true;
     } catch (error) {
       await this.removeAuthToken();

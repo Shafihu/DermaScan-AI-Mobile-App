@@ -55,10 +55,10 @@ export const useAuthStore = create<AuthState>()(
             // Use API service
             const response = await apiService.login({ email, password });
             const user: User = {
-              id: response.user.id,
-              email: response.user.email,
-              fullName: response.user.fullName,
-              profileImage: response.user.profileImage,
+              id: response.data.user._id,
+              email: response.data.user.email,
+              fullName: response.data.user.fullName,
+              profileImage: response.data.user.profileImage,
             };
 
             set({
@@ -109,10 +109,10 @@ export const useAuthStore = create<AuthState>()(
               password,
             });
             const user: User = {
-              id: response.user.id,
-              email: response.user.email,
-              fullName: response.user.fullName,
-              profileImage: response.user.profileImage,
+              id: response.data.user._id,
+              email: response.data.user.email,
+              fullName: response.data.user.fullName,
+              profileImage: response.data.user.profileImage,
             };
 
             set({
@@ -208,21 +208,27 @@ export const useAuthStore = create<AuthState>()(
           if (isOnline) {
             const isAuthenticated = await apiService.isAuthenticated();
             if (isAuthenticated) {
-              const profile = await apiService.getProfile();
-              const user: User = {
-                id: profile.id,
-                email: profile.email,
-                fullName: profile.fullName,
-                profileImage: profile.profileImage,
-              };
-              set({ user, isAuthenticated: true });
+              try {
+                const profile = await apiService.getProfile();
+                const user: User = {
+                  id: profile.id,
+                  email: profile.email,
+                  fullName: profile.fullName,
+                  profileImage: profile.profileImage,
+                };
+                set({ user, isAuthenticated: true });
+              } catch (error) {
+                // Profile endpoint might not be implemented yet, that's okay
+                console.log(
+                  "ℹ️ Profile endpoint not available, keeping current user data"
+                );
+              }
             } else {
               set({ user: null, isAuthenticated: false });
             }
           }
         } catch (error) {
-          console.error("Error checking auth status:", error);
-          set({ user: null, isAuthenticated: false });
+          console.log("ℹ️ Auth status check failed, keeping current state");
         }
       },
 

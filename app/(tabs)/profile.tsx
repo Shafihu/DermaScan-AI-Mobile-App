@@ -18,6 +18,7 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore, useScanStore, useAppStore } from "@/stores";
 import { handleLogout } from "@/utils/navigation-utils";
+import { runApiTests } from "@/services/apiTest";
 
 export default function ProfileScreen() {
   const { user, updateProfile } = useAuthStore();
@@ -299,6 +300,40 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.supportItem}>
               <Ionicons name="document-text-outline" size={24} color="#666" />
               <Text style={styles.supportText}>Privacy Policy</Text>
+              <Ionicons name="chevron-forward" size={20} color="#CCC" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* API Test */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Development</Text>
+          <View style={styles.supportContainer}>
+            <TouchableOpacity
+              style={styles.supportItem}
+              onPress={async () => {
+                Alert.alert("API Test", "Testing API connection...");
+                const results = await runApiTests();
+
+                let message = `Connection: ${
+                  results.connection ? "✅" : "❌"
+                }\n`;
+                message += `Auth Endpoints: ${results.auth ? "✅" : "❌"}\n`;
+                message += `Signup Test: ${
+                  results.signup.success ? "✅" : "❌"
+                }`;
+
+                if (!results.signup.success && results.signup.error) {
+                  message += `\n\nSignup Error: ${JSON.stringify(
+                    results.signup.error
+                  )}`;
+                }
+
+                Alert.alert("API Test Results", message);
+              }}
+            >
+              <Ionicons name="wifi-outline" size={24} color="#666" />
+              <Text style={styles.supportText}>Test API Connection</Text>
               <Ionicons name="chevron-forward" size={20} color="#CCC" />
             </TouchableOpacity>
           </View>

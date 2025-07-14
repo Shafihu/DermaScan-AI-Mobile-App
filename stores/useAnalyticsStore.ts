@@ -1,28 +1,39 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiService, AnalyticsResponse } from "../services/apiService";
+
+export interface AnalyticsData {
+  totalScans: number;
+  averageConfidence: number;
+  mostCommonConditions: Array<{
+    condition: string;
+    count: number;
+  }>;
+  scanTrends: Array<{
+    date: string;
+    count: number;
+  }>;
+  healthScore: number;
+}
 
 export interface AnalyticsState {
   // State
-  analytics: AnalyticsResponse | null;
+  analytics: AnalyticsData | null;
   healthScore: number;
   isLoading: boolean;
   error: string | null;
-  isOnline: boolean;
   lastUpdated: number | null;
 
   // Actions
   loadAnalytics: () => Promise<void>;
-  loadHealthScore: () => Promise<void>;
-  refreshAnalytics: () => Promise<void>;
+  updateAnalytics: (data: Partial<AnalyticsData>) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  setOnlineStatus: (isOnline: boolean) => void;
   clearAnalytics: () => void;
+  calculateHealthScore: (scans: any[]) => void;
 }
 
-const defaultAnalytics: AnalyticsResponse = {
+const defaultAnalytics: AnalyticsData = {
   totalScans: 0,
   averageConfidence: 0,
   mostCommonConditions: [],
@@ -38,33 +49,32 @@ export const useAnalyticsStore = create<AnalyticsState>()(
       healthScore: 0,
       isLoading: false,
       error: null,
-      isOnline: true,
       lastUpdated: null,
 
       // Actions
       loadAnalytics: async () => {
         try {
           set({ isLoading: true, error: null });
-          const { isOnline } = get();
 
-          if (isOnline) {
-            try {
-              const [analytics, healthScoreData] = await Promise.all([
-                apiService.getAnalytics(),
-                apiService.getHealthScore(),
-              ]);
-
-              set({
-                analytics,
-                healthScore: healthScoreData.score,
-                lastUpdated: Date.now(),
-              });
-            } catch (error) {
-              console.error("Error loading analytics from server:", error);
-              // Keep local analytics if server fails
-            }
+          // Load from AsyncStorage only
+          const analyticsData = await AsyncStorage.getItem(
+            "@DermaScanAI:analytics"
+          );
+          if (analyticsData) {
+            const analytics = JSON.parse(analyticsData) as AnalyticsData;
+            set({
+              analytics,
+              healthScore: analytics.healthScore,
+              lastUpdated: Date.now(),
+            });
+          } else {
+            // Initialize with defaults
+            set({
+              analytics: defaultAnalytics,
+              healthScore: 0,
+              lastUpdated: Date.now(),
+            });
           }
-          // If offline, keep local analytics
         } catch (error) {
           console.error("Error loading analytics:", error);
           set({ error: "Failed to load analytics" });
@@ -73,45 +83,54 @@ export const useAnalyticsStore = create<AnalyticsState>()(
         }
       },
 
-      loadHealthScore: async () => {
+      updateAnalytics: async (data: Partial<AnalyticsData>) => {
         try {
-          const { isOnline } = get();
+          set({ isLoading: true, error: null });
+          const { analytics } = get();
 
-          if (isOnline) {
-            try {
-              const healthScoreData = await apiService.getHealthScore();
-              set({ healthScore: healthScoreData.score });
-            } catch (error) {
-              console.error("Error loading health score from server:", error);
-            }
-          }
-        } catch (error) {
-          console.error("Error loading health score:", error);
-        }
-      },
-
-      refreshAnalytics: async () => {
-        const { isOnline } = get();
-        if (!isOnline) return;
-
-        try {
-          set({ isLoading: true });
-          const [analytics, healthScoreData] = await Promise.all([
-            apiService.getAnalytics(),
-            apiService.getHealthScore(),
-          ]);
+          const updatedAnalytics = {
+            ...(analytics || defaultAnalytics),
+            ...data,
+          };
 
           set({
-            analytics,
-            healthScore: healthScoreData.score,
+            analytics: updatedAnalytics,
+            healthScore: updatedAnalytics.healthScore,
             lastUpdated: Date.now(),
           });
+
+          // Save to AsyncStorage
+          await AsyncStorage.setItem(
+            "@DermaScanAI:analytics",
+            JSON.stringify(updatedAnalytics)
+          );
         } catch (error) {
-          console.error("Error refreshing analytics:", error);
-          set({ error: "Failed to refresh analytics" });
+          console.error("Error updating analytics:", error);
+          set({ error: "Failed to update analytics" });
         } finally {
           set({ isLoading: false });
         }
+      },
+
+      calculateHealthScore: (scans: any[]) => {
+        if (scans.length === 0) {
+          set({ healthScore: 0 });
+          return;
+        }
+
+        // Simple health score calculation based on scan data
+        const totalScans = scans.length;
+        const averageConfidence =
+          scans.reduce((sum, scan) => sum + (scan.confidence || 0), 0) /
+          totalScans;
+
+        // Calculate health score (0-100) based on confidence and scan frequency
+        const healthScore = Math.min(
+          100,
+          Math.round(averageConfidence * 0.7 + Math.min(totalScans, 10) * 3)
+        );
+
+        set({ healthScore });
       },
 
       setLoading: (loading: boolean) => {
@@ -122,20 +141,13 @@ export const useAnalyticsStore = create<AnalyticsState>()(
         set({ error });
       },
 
-      setOnlineStatus: (isOnline: boolean) => {
-        set({ isOnline });
-        if (isOnline) {
-          // Try to refresh analytics when coming back online
-          get().refreshAnalytics();
-        }
-      },
-
       clearAnalytics: () => {
         set({
           analytics: null,
           healthScore: 0,
           lastUpdated: null,
         });
+        AsyncStorage.removeItem("@DermaScanAI:analytics");
       },
     }),
     {
@@ -145,7 +157,6 @@ export const useAnalyticsStore = create<AnalyticsState>()(
         analytics: state.analytics,
         healthScore: state.healthScore,
         lastUpdated: state.lastUpdated,
-        isOnline: state.isOnline,
       }),
     }
   )

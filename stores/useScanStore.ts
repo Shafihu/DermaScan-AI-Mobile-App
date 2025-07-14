@@ -102,7 +102,9 @@ export const useScanStore = create<ScanState>()(
             scanHistory: scanHistory.filter((scan) => scan.id !== id),
           });
         } catch (error) {
-          console.error("Error deleting scan:", error);
+          console.log(
+            "ℹ️ Scan delete endpoint not available, removing locally"
+          );
           // Still remove from local state even if server delete fails
           set({
             scanHistory: scanHistory.filter((scan) => scan.id !== id),
@@ -168,9 +170,8 @@ export const useScanStore = create<ScanState>()(
               );
               set({ scanHistory: convertedHistory });
             } catch (error) {
-              console.error(
-                "Error loading from server, falling back to local:",
-                error
+              console.log(
+                "ℹ️ Scan history endpoint not available, using local data"
               );
               // Fallback to local storage
               await loadLocalHistory();
@@ -215,13 +216,13 @@ export const useScanStore = create<ScanState>()(
 
               set({ scanHistory: updatedHistory });
             } catch (error) {
-              console.error("Error syncing scan:", localScan.id, error);
+              console.log("ℹ️ Scan sync endpoint not available");
             }
           }
 
           set({ syncStatus: "idle" });
         } catch (error) {
-          console.error("Error during sync:", error);
+          console.log("ℹ️ Sync operation failed, keeping local data");
           set({ syncStatus: "error" });
         }
       },

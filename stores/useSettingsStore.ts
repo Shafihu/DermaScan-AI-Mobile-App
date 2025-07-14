@@ -1,21 +1,35 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiService, UserSettings } from "../services/apiService";
+
+export interface UserSettings {
+  notifications: {
+    enabled: boolean;
+    scanReminders: boolean;
+    healthTips: boolean;
+  };
+  privacy: {
+    shareData: boolean;
+    anonymousMode: boolean;
+  };
+  preferences: {
+    theme: "light" | "dark" | "auto";
+    language: string;
+    units: "metric" | "imperial";
+  };
+}
 
 export interface SettingsState {
   // State
   settings: UserSettings;
   isLoading: boolean;
   error: string | null;
-  isOnline: boolean;
 
   // Actions
   loadSettings: () => Promise<void>;
   updateSettings: (updates: Partial<UserSettings>) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  setOnlineStatus: (isOnline: boolean) => void;
   resetSettings: () => void;
 }
 
@@ -43,24 +57,21 @@ export const useSettingsStore = create<SettingsState>()(
       settings: defaultSettings,
       isLoading: false,
       error: null,
-      isOnline: true,
 
       // Actions
       loadSettings: async () => {
         try {
           set({ isLoading: true, error: null });
-          const { isOnline } = get();
 
-          if (isOnline) {
-            try {
-              const serverSettings = await apiService.getUserSettings();
-              set({ settings: serverSettings });
-            } catch (error) {
-              console.error("Error loading settings from server:", error);
-              // Keep local settings if server fails
-            }
+          // Load from AsyncStorage only
+          const settingsData = await AsyncStorage.getItem(
+            "@DermaScanAI:settings"
+          );
+          if (settingsData) {
+            const settings = JSON.parse(settingsData) as UserSettings;
+            set({ settings });
           }
-          // If offline, keep local settings
+          // If no settings found, use defaults
         } catch (error) {
           console.error("Error loading settings:", error);
           set({ error: "Failed to load settings" });
@@ -72,22 +83,16 @@ export const useSettingsStore = create<SettingsState>()(
       updateSettings: async (updates: Partial<UserSettings>) => {
         try {
           set({ isLoading: true, error: null });
-          const { settings, isOnline } = get();
+          const { settings } = get();
 
           const updatedSettings = { ...settings, ...updates };
           set({ settings: updatedSettings });
 
-          if (isOnline) {
-            try {
-              const serverSettings = await apiService.updateUserSettings(
-                updates
-              );
-              set({ settings: serverSettings });
-            } catch (error) {
-              console.error("Error updating settings on server:", error);
-              // Keep local changes even if server update fails
-            }
-          }
+          // Save to AsyncStorage
+          await AsyncStorage.setItem(
+            "@DermaScanAI:settings",
+            JSON.stringify(updatedSettings)
+          );
         } catch (error) {
           console.error("Error updating settings:", error);
           set({ error: "Failed to update settings" });
@@ -104,16 +109,12 @@ export const useSettingsStore = create<SettingsState>()(
         set({ error });
       },
 
-      setOnlineStatus: (isOnline: boolean) => {
-        set({ isOnline });
-        if (isOnline) {
-          // Try to sync settings when coming back online
-          get().loadSettings();
-        }
-      },
-
       resetSettings: () => {
         set({ settings: defaultSettings });
+        AsyncStorage.setItem(
+          "@DermaScanAI:settings",
+          JSON.stringify(defaultSettings)
+        );
       },
     }),
     {
@@ -121,7 +122,6 @@ export const useSettingsStore = create<SettingsState>()(
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         settings: state.settings,
-        isOnline: state.isOnline,
       }),
     }
   )

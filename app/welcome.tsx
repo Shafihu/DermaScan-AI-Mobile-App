@@ -12,7 +12,6 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
-import { OnboardingUtils } from "@/utils/onboarding-utils";
 
 const { width, height } = Dimensions.get("window");
 
@@ -44,14 +43,13 @@ export default function WelcomeScreen() {
     Animated.parallel(animations).start();
   }, []);
 
-  const handleGetStarted = async () => {
-    await OnboardingUtils.setWelcomeShown();
+  const handleGetStarted = () => {
     router.push("/onboarding");
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <StatusBar style="light" />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
 
       <LinearGradient
         colors={["#FF8E6E", "#FF6B4A", "#FF4A2C"]}
@@ -178,7 +176,7 @@ export default function WelcomeScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={["rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.1)"]}
+              colors={["#FF8E6E", "#FF6B4A"]}
               style={styles.buttonGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -196,7 +194,7 @@ export default function WelcomeScreen() {
           </View>
         </Animated.View>
       </LinearGradient>
-    </ThemedView>
+    </View>
   );
 }
 

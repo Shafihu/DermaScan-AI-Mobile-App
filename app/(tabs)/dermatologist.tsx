@@ -27,7 +27,7 @@ const MAIN_COLOR = "#FF8E6E"; // Coral color as the main theme
 const dermatologists = [
   {
     id: "1",
-    name: "Dr. Sarah Johnson",
+    name: "Dr. Kwame Addo",
     specialty: "General Dermatology, Skin Cancer",
     experience: "15 years",
     rating: 4.9,
@@ -36,15 +36,15 @@ const dermatologists = [
     image:
       "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=300&auto=format&fit=crop",
     verified: true,
-    education: "Harvard Medical School",
-    consultationFee: 120,
+    education: "University of Ghana Medical School",
+    consultationFee: 1200,
     nextAvailable: "Today, 3:30 PM",
     acceptingNew: true,
-    bio: "Dr. Johnson specializes in skin cancer detection and treatment, with additional expertise in general dermatological conditions. She has published numerous research papers on early melanoma detection.",
+    bio: "Dr. Addo specializes in skin cancer detection and treatment, with additional expertise in general dermatological conditions. He has published numerous research papers on early melanoma detection and tropical skin conditions.",
   },
   {
     id: "2",
-    name: "Dr. Michael Chen",
+    name: "Dr. Ama Osei",
     specialty: "Pediatric Dermatology, Eczema",
     experience: "12 years",
     rating: 4.8,
@@ -53,15 +53,15 @@ const dermatologists = [
     image:
       "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=300&auto=format&fit=crop",
     verified: true,
-    education: "Johns Hopkins University",
-    consultationFee: 110,
+    education: "Kwame Nkrumah University of Science and Technology",
+    consultationFee: 1100,
     nextAvailable: "Tomorrow, 10:15 AM",
     acceptingNew: true,
-    bio: "Dr. Chen is a board-certified dermatologist specializing in pediatric skin conditions and eczema management. He takes a holistic approach to treatment, focusing on long-term skin health.",
+    bio: "Dr. Osei is a board-certified dermatologist specializing in pediatric skin conditions and eczema management. She takes a holistic approach to treatment, focusing on long-term skin health and tropical skin disorders.",
   },
   {
     id: "3",
-    name: "Dr. Amara Patel",
+    name: "Dr. Kofi Mensah",
     specialty: "Cosmetic Dermatology, Acne",
     experience: "8 years",
     rating: 4.7,
@@ -70,15 +70,15 @@ const dermatologists = [
     image:
       "https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=300&auto=format&fit=crop",
     verified: true,
-    education: "Stanford University",
-    consultationFee: 130,
+    education: "University of Cape Coast Medical School",
+    consultationFee: 1300,
     nextAvailable: "Wed, 2:00 PM",
     acceptingNew: true,
-    bio: "Dr. Patel combines medical dermatology with cosmetic expertise, specializing in acne treatment and scar management. She is known for her personalized treatment plans and attentive care.",
+    bio: "Dr. Mensah combines medical dermatology with cosmetic expertise, specializing in acne treatment and scar management. He is known for his personalized treatment plans and attentive care for diverse skin types.",
   },
   {
     id: "4",
-    name: "Dr. Robert Williams",
+    name: "Dr. Abena Asante",
     specialty: "Surgical Dermatology, Psoriasis",
     experience: "20 years",
     rating: 4.9,
@@ -87,15 +87,15 @@ const dermatologists = [
     image:
       "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=300&auto=format&fit=crop",
     verified: true,
-    education: "Yale School of Medicine",
-    consultationFee: 150,
+    education: "University of Ghana Medical School",
+    consultationFee: 1500,
     nextAvailable: "Next Week",
     acceptingNew: false,
-    bio: "With over two decades of experience, Dr. Williams is a leading expert in surgical dermatology and psoriasis treatment. He has pioneered several minimally invasive techniques for skin cancer removal.",
+    bio: "With over two decades of experience, Dr. Asante is a leading expert in surgical dermatology and psoriasis treatment. She has pioneered several minimally invasive techniques for skin cancer removal and tropical skin conditions.",
   },
   {
     id: "5",
-    name: "Dr. Lisa Rodriguez",
+    name: "Dr. Yaw Darko",
     specialty: "Ethnic Skin, Hair Disorders",
     experience: "10 years",
     rating: 4.8,
@@ -104,11 +104,11 @@ const dermatologists = [
     image:
       "https://images.unsplash.com/photo-1527613426441-4da17471b66d?q=80&w=300&auto=format&fit=crop",
     verified: true,
-    education: "Columbia University",
-    consultationFee: 125,
+    education: "Kwame Nkrumah University of Science and Technology",
+    consultationFee: 1250,
     nextAvailable: "Today, 5:45 PM",
     acceptingNew: true,
-    bio: "Dr. Rodriguez specializes in dermatological issues specific to diverse skin types and hair disorders. She is committed to culturally competent care and has developed specialized treatments for various skin tones.",
+    bio: "Dr. Darko specializes in dermatological issues specific to African skin types and hair disorders. He is committed to culturally competent care and has developed specialized treatments for various skin tones and hair textures common in Ghana.",
   },
 ];
 
@@ -130,7 +130,7 @@ const consultationTypes: ConsultationType[] = [
     description: "Face-to-face video call with a dermatologist",
     icon: "video",
     duration: "15-20 min",
-    price: 60,
+    price: 600,
   },
   {
     id: "message",
@@ -138,7 +138,7 @@ const consultationTypes: ConsultationType[] = [
     description: "Send photos and messages to a dermatologist",
     icon: "message-square",
     duration: "24-48 hours",
-    price: 40,
+    price: 400,
   },
   {
     id: "inperson",
@@ -146,7 +146,7 @@ const consultationTypes: ConsultationType[] = [
     description: "Schedule an office visit with a dermatologist",
     icon: "user",
     duration: "30-45 min",
-    price: 120,
+    price: 1200,
   },
 ];
 
@@ -479,7 +479,7 @@ export default function DermatologistScreen() {
         <View style={styles.consultationInfo}>
           <View style={styles.consultationPrice}>
             <Text style={styles.priceLabel}>Consultation</Text>
-            <Text style={styles.priceValue}>${item.consultationFee}</Text>
+            <Text style={styles.priceValue}>₵{item.consultationFee}</Text>
           </View>
           <TouchableOpacity
             style={styles.bookButton}

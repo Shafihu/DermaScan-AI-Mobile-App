@@ -67,9 +67,30 @@ export const OnboardingUtils = {
   },
 
   /**
-   * Get the initial route based on onboarding state
+   * Check if user is authenticated
+   */
+  async isAuthenticated(): Promise<boolean> {
+    try {
+      const userSession = await AsyncStorage.getItem(
+        "@DermaScanAI:userSession"
+      );
+      return userSession === "true";
+    } catch (error) {
+      console.error("Error checking authentication status:", error);
+      return false;
+    }
+  },
+
+  /**
+   * Get the initial route based on onboarding and auth state
    */
   async getInitialRoute(): Promise<string> {
+    const isAuth = await this.isAuthenticated();
+
+    if (!isAuth) {
+      return "/auth/login";
+    }
+
     const welcomeShown = await this.isWelcomeShown();
     const onboardingComplete = await this.isOnboardingComplete();
 

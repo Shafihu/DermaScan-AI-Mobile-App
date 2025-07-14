@@ -94,8 +94,7 @@ export default function OnboardingScreen() {
   };
 
   const handleGetStarted = async () => {
-    await OnboardingUtils.setOnboardingComplete();
-    router.replace("/permissions");
+    router.push("/auth/login");
   };
 
   const handleScroll = (event: any) => {

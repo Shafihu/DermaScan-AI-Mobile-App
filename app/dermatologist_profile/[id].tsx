@@ -22,7 +22,7 @@ const MAIN_COLOR = "#FF8E6E";
 const dermatologists = [
   {
     id: "1",
-    name: "Dr. Sarah Johnson",
+    name: "Dr. Kwame Addo",
     specialty: "General Dermatology, Skin Cancer",
     experience: "15 years",
     rating: 4.9,
@@ -31,65 +31,65 @@ const dermatologists = [
     image:
       "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=300&auto=format&fit=crop",
     verified: true,
-    education: "Harvard Medical School",
-    consultationFee: 120,
+    education: "University of Ghana Medical School",
+    consultationFee: 1200,
     nextAvailable: "Today, 3:30 PM",
     acceptingNew: true,
-    bio: "Dr. Johnson specializes in skin cancer detection and treatment, with additional expertise in general dermatological conditions. She has published numerous research papers on early melanoma detection.",
-    languages: ["English", "Spanish"],
-    address: "123 Medical Center Blvd, Suite 500, Boston, MA 02115",
+    bio: "Dr. Addo specializes in skin cancer detection and treatment, with additional expertise in general dermatological conditions. He has published numerous research papers on early melanoma detection and tropical skin conditions.",
+    languages: ["English", "Twi", "Ga"],
+    address: "123 Korle Bu Road, Accra Central, Accra, Ghana",
     certifications: [
-      "American Board of Dermatology",
-      "American Academy of Dermatology",
+      "Ghana Medical and Dental Council",
+      "West African College of Physicians",
     ],
     specializations: [
       "Skin Cancer Screening",
       "Acne",
       "Eczema",
       "Psoriasis",
-      "Rosacea",
+      "Tropical Skin Conditions",
     ],
     education_details: [
       {
-        degree: "MD",
-        institution: "Harvard Medical School",
+        degree: "MBChB",
+        institution: "University of Ghana Medical School",
         year: "2005",
       },
       {
         degree: "Residency in Dermatology",
-        institution: "Massachusetts General Hospital",
+        institution: "Korle Bu Teaching Hospital",
         year: "2009",
       },
       {
         degree: "Fellowship in Dermatologic Oncology",
-        institution: "Dana-Farber Cancer Institute",
+        institution: "University of Ghana Medical Centre",
         year: "2010",
       },
     ],
     reviews: [
       {
         id: "r1",
-        patient: "Michael T.",
+        patient: "Kwame T.",
         rating: 5,
         date: "2 weeks ago",
         comment:
-          "Dr. Johnson was thorough and took the time to explain my condition in detail. She answered all my questions and made me feel at ease. Highly recommend!",
+          "Dr. Addo was thorough and took the time to explain my condition in detail. He answered all my questions and made me feel at ease. Highly recommend!",
       },
       {
         id: "r2",
-        patient: "Rebecca L.",
+        patient: "Ama L.",
         rating: 5,
         date: "1 month ago",
         comment:
-          "Excellent experience. Dr. Johnson detected an early-stage melanoma that other doctors had missed. Her attention to detail potentially saved my life.",
+          "Excellent experience. Dr. Addo detected an early-stage melanoma that other doctors had missed. His attention to detail potentially saved my life.",
       },
       {
         id: "r3",
-        patient: "David K.",
+        patient: "Kofi K.",
         rating: 4,
         date: "2 months ago",
         comment:
-          "Very professional and knowledgeable. The wait time was a bit long, but the quality of care made up for it. Would definitely see her again.",
+          "Very professional and knowledgeable. The wait time was a bit long, but the quality of care made up for it. Would definitely see him again.",
       },
     ],
     availableSlots: [
@@ -103,7 +103,7 @@ const dermatologists = [
   },
   {
     id: "2",
-    name: "Dr. Michael Chen",
+    name: "Dr. Ama Osei",
     specialty: "Pediatric Dermatology, Eczema",
     experience: "12 years",
     rating: 4.8,
@@ -112,15 +112,15 @@ const dermatologists = [
     image:
       "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=300&auto=format&fit=crop",
     verified: true,
-    education: "Johns Hopkins University",
-    consultationFee: 110,
+    education: "Kwame Nkrumah University of Science and Technology",
+    consultationFee: 1100,
     nextAvailable: "Tomorrow, 10:15 AM",
     acceptingNew: true,
-    bio: "Dr. Chen is a board-certified dermatologist specializing in pediatric skin conditions and eczema management. He takes a holistic approach to treatment, focusing on long-term skin health.",
-    languages: ["English", "Mandarin"],
-    address: "456 Children's Health Way, Baltimore, MD 21287",
+    bio: "Dr. Osei is a board-certified dermatologist specializing in pediatric skin conditions and eczema management. She takes a holistic approach to treatment, focusing on long-term skin health and tropical skin disorders.",
+    languages: ["English", "Twi", "Fante"],
+    address: "456 Children's Health Way, Kumasi, Ashanti Region, Ghana",
     certifications: [
-      "American Board of Dermatology",
+      "Ghana Medical and Dental Council",
       "Society for Pediatric Dermatology",
     ],
     specializations: [
@@ -128,21 +128,22 @@ const dermatologists = [
       "Eczema",
       "Allergic Skin Reactions",
       "Birthmarks",
+      "Tropical Skin Disorders",
     ],
     education_details: [
       {
-        degree: "MD",
-        institution: "Johns Hopkins University School of Medicine",
+        degree: "MBChB",
+        institution: "Kwame Nkrumah University of Science and Technology",
         year: "2008",
       },
       {
         degree: "Residency in Dermatology",
-        institution: "Johns Hopkins Hospital",
+        institution: "Komfo Anokye Teaching Hospital",
         year: "2012",
       },
       {
         degree: "Fellowship in Pediatric Dermatology",
-        institution: "Children's Hospital of Philadelphia",
+        institution: "Korle Bu Teaching Hospital",
         year: "2013",
       },
     ],
@@ -153,7 +154,7 @@ const dermatologists = [
         rating: 5,
         date: "3 weeks ago",
         comment:
-          "Dr. Chen was amazing with my 4-year-old son. He was patient, kind, and explained everything in a way that both my son and I could understand.",
+          "Dr. Osei was amazing with my 4-year-old son. She was patient, kind, and explained everything in a way that both my son and I could understand.",
       },
       {
         id: "r2",
@@ -161,7 +162,7 @@ const dermatologists = [
         rating: 5,
         date: "1 month ago",
         comment:
-          "After seeing multiple doctors for my daughter's eczema, Dr. Chen was the only one who provided a treatment plan that actually worked. We're so grateful.",
+          "After seeing multiple doctors for my daughter's eczema, Dr. Osei was the only one who provided a treatment plan that actually worked. We're so grateful.",
       },
       {
         id: "r3",
@@ -201,7 +202,7 @@ const consultationTypes: ConsultationType[] = [
     description: "Face-to-face video call with a dermatologist",
     icon: "video",
     duration: "15-20 min",
-    price: 60,
+    price: 600,
   },
   {
     id: "message",
@@ -209,7 +210,7 @@ const consultationTypes: ConsultationType[] = [
     description: "Send photos and messages to a dermatologist",
     icon: "message-square",
     duration: "24-48 hours",
-    price: 40,
+    price: 400,
   },
   {
     id: "inperson",
@@ -217,7 +218,7 @@ const consultationTypes: ConsultationType[] = [
     description: "Schedule an office visit with a dermatologist",
     icon: "user",
     duration: "30-45 min",
-    price: 120,
+    price: 1200,
   },
 ];
 

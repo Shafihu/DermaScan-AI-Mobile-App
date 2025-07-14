@@ -15,7 +15,7 @@ import {
   Dimensions,
 } from "react-native";
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAppStore } from "@/stores";
 
 const { width } = Dimensions.get("window");
 const MAIN_COLOR = "#FF8E6E"; // Coral color as the main theme
@@ -42,47 +42,22 @@ type Category = {
 };
 
 export default function TipsScreen({ navigation }: { navigation?: any }) {
+  const { settings, updateSettings } = useAppStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [favoriteTips, setFavoriteTips] = useState<string[]>([]);
   const [expandedTip, setExpandedTip] = useState<string | null>(null);
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
   const [refreshing, setRefreshing] = useState(false);
 
-  // Load favorite tips from storage
-  useEffect(() => {
-    const loadFavoriteTips = async () => {
-      try {
-        const storedFavorites = await AsyncStorage.getItem(FAVORITE_TIPS_KEY);
-        if (storedFavorites) {
-          setFavoriteTips(JSON.parse(storedFavorites));
-        }
-      } catch (error) {
-        console.error("Failed to load favorite tips:", error);
-      }
-    };
-
-    loadFavoriteTips();
-  }, []);
-
-  // Save favorite tips to storage
-  const saveFavoriteTips = async (tips: string[]) => {
-    try {
-      await AsyncStorage.setItem(FAVORITE_TIPS_KEY, JSON.stringify(tips));
-    } catch (error) {
-      console.error("Failed to save favorite tips:", error);
-    }
-  };
-
   // Toggle favorite status of a tip
   const toggleFavorite = (tipId: string) => {
-    const newFavorites = favoriteTips.includes(tipId)
-      ? favoriteTips.filter((id) => id !== tipId)
-      : [...favoriteTips, tipId];
+    const currentFavorites = settings.favoriteTips;
+    const newFavorites = currentFavorites.includes(tipId)
+      ? currentFavorites.filter((id) => id !== tipId)
+      : [...currentFavorites, tipId];
 
-    setFavoriteTips(newFavorites);
-    saveFavoriteTips(newFavorites);
+    updateSettings({ favoriteTips: newFavorites });
   };
 
   // Share a tip
@@ -533,7 +508,7 @@ export default function TipsScreen({ navigation }: { navigation?: any }) {
       selectedCategory === null || tip.category === selectedCategory;
 
     const matchesFavorites =
-      !showOnlyFavorites || favoriteTips.includes(tip.id);
+      !showOnlyFavorites || settings.favoriteTips.includes(tip.id);
 
     return matchesSearch && matchesCategory && matchesFavorites;
   });
@@ -595,7 +570,7 @@ export default function TipsScreen({ navigation }: { navigation?: any }) {
 
   // Render tip card
   const renderTipCard = ({ item }: { item: Tip }) => {
-    const isFavorite = favoriteTips.includes(item.id);
+    const isFavorite = settings.favoriteTips.includes(item.id);
     const isExpanded = expandedTip === item.id;
     const category = categories.find((cat) => cat.id === item.category);
 
@@ -665,7 +640,7 @@ export default function TipsScreen({ navigation }: { navigation?: any }) {
 
   // Render featured tip
   const renderFeaturedTip = ({ item }: { item: Tip }) => {
-    const isFavorite = favoriteTips.includes(item.id);
+    const isFavorite = settings.favoriteTips.includes(item.id);
     const category = categories.find((cat) => cat.id === item.category);
 
     return (

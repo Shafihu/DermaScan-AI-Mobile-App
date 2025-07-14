@@ -14,10 +14,9 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { format } from "date-fns";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { type ScanResult, getHistory } from "../../utils/storage-utils";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import { useAuthStore, useScanStore } from "@/stores";
 
 const { width } = Dimensions.get("window");
 
@@ -29,20 +28,9 @@ const getGreeting = () => {
   return "Good Evening";
 };
 
-// Get user's first name
-const getUserName = async () => {
-  try {
-    const name = await AsyncStorage.getItem("@DermaScanAI:userName");
-    return name || "";
-  } catch (error) {
-    console.error("Error getting user name:", error);
-    return "";
-  }
-};
-
 export default function HomeScreen() {
-  const [userName, setUserName] = useState("");
-  const [recentScans, setRecentScans] = useState<ScanResult[]>([]);
+  const { user } = useAuthStore();
+  const { scanHistory, loadHistory } = useScanStore();
   const [skinHealthScore, setSkinHealthScore] = useState(78);
 
   // Animation values
@@ -52,18 +40,10 @@ export default function HomeScreen() {
   // Load user data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      loadUserData();
+      loadHistory();
       animateContent();
-    }, [])
+    }, [loadHistory])
   );
-
-  const loadUserData = async () => {
-    const name = await getUserName();
-    setUserName(name);
-
-    const history = await getHistory();
-    setRecentScans(history.slice(0, 2)); // Get 2 most recent scans
-  };
 
   const animateContent = () => {
     Animated.parallel([
@@ -91,7 +71,7 @@ export default function HomeScreen() {
   };
 
   // Navigate to history detail
-  const viewScanDetail = (scan: ScanResult) => {
+  const viewScanDetail = (scan: any) => {
     router.navigate({
       pathname: "/history_details_screen",
       params: {
@@ -149,7 +129,9 @@ export default function HomeScreen() {
           <View style={styles.headerContent}>
             <View>
               <Text style={styles.greeting}>{getGreeting()}</Text>
-              <Text style={styles.userName}>{userName || "Welcome back"}</Text>
+              <Text style={styles.userName}>
+                {user?.fullName || "Welcome back"}
+              </Text>
             </View>
             <TouchableOpacity style={styles.profileButton}>
               <Ionicons name="person-circle-outline" size={32} color="#333" />
@@ -233,16 +215,16 @@ export default function HomeScreen() {
         >
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Scans</Text>
-            {recentScans.length > 0 && (
+            {scanHistory.length > 0 && (
               <TouchableOpacity onPress={viewAllHistory}>
                 <Text style={styles.sectionLink}>View All</Text>
               </TouchableOpacity>
             )}
           </View>
 
-          {recentScans.length > 0 ? (
+          {scanHistory.length > 0 ? (
             <View style={styles.scansContainer}>
-              {recentScans.map((scan) => (
+              {scanHistory.slice(0, 2).map((scan) => (
                 <TouchableOpacity
                   key={scan.id}
                   style={styles.scanCard}

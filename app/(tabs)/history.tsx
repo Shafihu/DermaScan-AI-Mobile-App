@@ -148,62 +148,33 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import { format } from "date-fns";
 import { router, useFocusEffect } from "expo-router";
+import { useScanStore } from "@/stores";
 
 const MAIN_COLOR = "#FF8E6E"; // Coral color as the main theme
 const HISTORY_STORAGE_KEY = "@DermaScanAI:history";
 
-// Type definitions
-type ScanResult = {
-  id: string;
-  imageUri: string;
-  condition: string;
-  confidence: number;
-  severity: string;
-  description: string;
-  symptoms: string[];
-  recommendations?: string;
-  date: number;
-};
+// Import ScanResult type from utils
+import { ScanResult } from "@/utils/storage-utils";
 
 export default function HistoryScreen({ navigation }: { navigation?: any }) {
-  const [history, setHistory] = useState<ScanResult[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { scanHistory, deleteScanResult, loadHistory, isLoading } =
+    useScanStore();
   const [refreshing, setRefreshing] = useState(false);
 
   // Load history when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       loadHistory();
-    }, [])
+    }, [loadHistory])
   );
-
-  // Load history from AsyncStorage
-  const loadHistory = async () => {
-    try {
-      setLoading(true);
-      const historyData = await AsyncStorage.getItem(HISTORY_STORAGE_KEY);
-      if (historyData) {
-        const parsedHistory = JSON.parse(historyData) as ScanResult[];
-        // Sort by date, newest first
-        setHistory(parsedHistory.sort((a, b) => b.date - a.date));
-      }
-    } catch (error) {
-      console.error("Failed to load history:", error);
-      Alert.alert("Error", "Failed to load scan history");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
 
   // Handle pull-to-refresh
   const onRefresh = () => {
     setRefreshing(true);
-    loadHistory();
+    loadHistory().finally(() => setRefreshing(false));
   };
 
   // Delete a single history item
@@ -218,12 +189,7 @@ export default function HistoryScreen({ navigation }: { navigation?: any }) {
           style: "destructive",
           onPress: async () => {
             try {
-              const updatedHistory = history.filter((item) => item.id !== id);
-              await AsyncStorage.setItem(
-                HISTORY_STORAGE_KEY,
-                JSON.stringify(updatedHistory)
-              );
-              setHistory(updatedHistory);
+              deleteScanResult(id);
             } catch (error) {
               console.error("Failed to delete history item:", error);
               Alert.alert("Error", "Failed to delete scan");
@@ -236,7 +202,7 @@ export default function HistoryScreen({ navigation }: { navigation?: any }) {
 
   // Clear all history
   const clearAllHistory = () => {
-    if (history.length === 0) return;
+    if (scanHistory.length === 0) return;
 
     Alert.alert(
       "Clear History",
@@ -248,8 +214,9 @@ export default function HistoryScreen({ navigation }: { navigation?: any }) {
           style: "destructive",
           onPress: async () => {
             try {
-              await AsyncStorage.removeItem(HISTORY_STORAGE_KEY);
-              setHistory([]);
+              // Use the store's clearHistory method
+              const { clearHistory } = useScanStore.getState();
+              clearHistory();
             } catch (error) {
               console.error("Failed to clear history:", error);
               Alert.alert("Error", "Failed to clear scan history");
@@ -299,7 +266,7 @@ export default function HistoryScreen({ navigation }: { navigation?: any }) {
 
   // Render empty state
   const renderEmptyState = () => {
-    if (loading) return null;
+    if (isLoading) return null;
 
     return (
       <View style={styles.emptyStateContainer}>
@@ -367,12 +334,12 @@ export default function HistoryScreen({ navigation }: { navigation?: any }) {
         <TouchableOpacity
           style={styles.clearButton}
           onPress={clearAllHistory}
-          disabled={history.length === 0}
+          disabled={scanHistory.length === 0}
         >
           <Text
             style={[
               styles.clearButtonText,
-              history.length === 0 && styles.disabledText,
+              scanHistory.length === 0 && styles.disabledText,
             ]}
           >
             Clear All
@@ -381,13 +348,13 @@ export default function HistoryScreen({ navigation }: { navigation?: any }) {
       </View>
 
       {/* History List */}
-      {loading ? (
+      {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={MAIN_COLOR} />
         </View>
       ) : (
         <FlatList
-          data={history}
+          data={scanHistory}
           keyExtractor={(item) => item.id}
           renderItem={renderHistoryItem}
           contentContainerStyle={styles.listContainer}

@@ -15,14 +15,14 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuthStore } from "@/stores";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { login, isLoading, error, clearError } = useAuthStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -51,28 +51,26 @@ export default function LoginScreen() {
     Animated.parallel(animations).start();
   }, []);
 
+  // Show error alert when error state changes
+  useEffect(() => {
+    if (error) {
+      Alert.alert("Error", error);
+      clearError();
+    }
+  }, [error, clearError]);
+
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Store user session
-      await AsyncStorage.setItem("@DermaScanAI:userSession", "true");
-      await AsyncStorage.setItem("@DermaScanAI:userEmail", email);
-
+      await login(email, password);
       // Navigate to main app
       router.replace("/(tabs)");
     } catch (error) {
-      Alert.alert("Error", "Login failed. Please try again.");
-    } finally {
-      setIsLoading(false);
+      // Error is handled by the store
     }
   };
 

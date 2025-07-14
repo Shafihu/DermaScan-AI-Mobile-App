@@ -14,26 +14,18 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
-import { getHistory } from "@/utils/storage-utils";
 import { LinearGradient } from "expo-linear-gradient";
+import { useAuthStore, useScanStore, useAppStore } from "@/stores";
 
 export default function ProfileScreen() {
-  // User profile state
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const { user, updateProfile } = useAuthStore();
+  const { scanHistory } = useScanStore();
+  const { settings, updateSettings } = useAppStore();
+
+  // Local state
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
-  // App settings state
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
-
-  // App usage stats
-  const [totalScans, setTotalScans] = useState(0);
-  const [lastScanDate, setLastScanDate] = useState<string | null>(null);
 
   // Load user data
   useEffect(() => {
@@ -41,43 +33,7 @@ export default function ProfileScreen() {
       try {
         setIsLoading(true);
 
-        // Load profile data
-        const storedProfileImage = await AsyncStorage.getItem(
-          "@DermaScanAI:profileImage"
-        );
-        const storedFullName = await AsyncStorage.getItem(
-          "@DermaScanAI:fullName"
-        );
-        const storedEmail = await AsyncStorage.getItem("@DermaScanAI:email");
-
-        // Load app settings
-        const storedNotificationsEnabled = await AsyncStorage.getItem(
-          "@DermaScanAI:notificationsEnabled"
-        );
-        const storedDarkModeEnabled = await AsyncStorage.getItem(
-          "@DermaScanAI:darkModeEnabled"
-        );
-
-        // Set profile data
-        if (storedProfileImage) setProfileImage(storedProfileImage);
-        if (storedFullName) setFullName(storedFullName);
-        if (storedEmail) setEmail(storedEmail);
-
-        // Set app settings
-        if (storedNotificationsEnabled)
-          setNotificationsEnabled(storedNotificationsEnabled === "true");
-        if (storedDarkModeEnabled)
-          setDarkModeEnabled(storedDarkModeEnabled === "true");
-
-        // Load scan history for stats
-        const history = await getHistory();
-        setTotalScans(history.length);
-
-        if (history.length > 0) {
-          const lastScan = history[0];
-          setLastScanDate(new Date(lastScan.date).toLocaleDateString());
-        }
-
+        // Data is now loaded from stores automatically
         setIsLoading(false);
       } catch (error) {
         console.error("Error loading user data:", error);
@@ -93,21 +49,13 @@ export default function ProfileScreen() {
     try {
       setIsLoading(true);
 
-      // Save profile data
-      if (profileImage)
-        await AsyncStorage.setItem("@DermaScanAI:profileImage", profileImage);
-      await AsyncStorage.setItem("@DermaScanAI:fullName", fullName);
-      await AsyncStorage.setItem("@DermaScanAI:email", email);
-
-      // Save app settings
-      await AsyncStorage.setItem(
-        "@DermaScanAI:notificationsEnabled",
-        notificationsEnabled.toString()
-      );
-      await AsyncStorage.setItem(
-        "@DermaScanAI:darkModeEnabled",
-        darkModeEnabled.toString()
-      );
+      // Update profile in store
+      if (user) {
+        await updateProfile({
+          fullName: user.fullName,
+          profileImage: user.profileImage,
+        });
+      }
 
       setIsLoading(false);
       setIsEditing(false);
@@ -142,7 +90,9 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setProfileImage(result.assets[0].uri);
+        if (user) {
+          await updateProfile({ profileImage: result.assets[0].uri });
+        }
       }
     } catch (error) {
       console.error("Error picking image:", error);
@@ -158,7 +108,9 @@ export default function ProfileScreen() {
         style: "destructive",
         onPress: async () => {
           // Clear user data and navigate to welcome screen
-          await AsyncStorage.clear();
+          // Use logout from auth store
+          const { logout } = useAuthStore.getState();
+          await logout();
           // router.replace("/welcome");
         },
       },
@@ -203,9 +155,9 @@ export default function ProfileScreen() {
             onPress={isEditing ? pickImage : undefined}
             disabled={!isEditing}
           >
-            {profileImage ? (
+            {user?.profileImage ? (
               <Image
-                source={{ uri: profileImage }}
+                source={{ uri: user.profileImage }}
                 style={styles.profileImage}
               />
             ) : (
@@ -224,27 +176,33 @@ export default function ProfileScreen() {
             {isEditing ? (
               <TextInput
                 style={styles.nameInput}
-                value={fullName}
-                onChangeText={setFullName}
+                value={user?.fullName || ""}
+                onChangeText={(text) =>
+                  user && updateProfile({ fullName: text })
+                }
                 placeholder="Full Name"
                 placeholderTextColor="#999"
               />
             ) : (
-              <Text style={styles.nameText}>{fullName || "Add your name"}</Text>
+              <Text style={styles.nameText}>
+                {user?.fullName || "Add your name"}
+              </Text>
             )}
 
             {isEditing ? (
               <TextInput
                 style={styles.emailInput}
-                value={email}
-                onChangeText={setEmail}
+                value={user?.email || ""}
+                onChangeText={(text) => user && updateProfile({ email: text })}
                 placeholder="Email Address"
                 placeholderTextColor="#999"
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
             ) : (
-              <Text style={styles.emailText}>{email || "Add your email"}</Text>
+              <Text style={styles.emailText}>
+                {user?.email || "Add your email"}
+              </Text>
             )}
           </View>
         </View>
@@ -257,7 +215,7 @@ export default function ProfileScreen() {
               <View style={styles.statIconContainer}>
                 <Ionicons name="scan-outline" size={24} color="#FFF" />
               </View>
-              <Text style={styles.statValue}>{totalScans}</Text>
+              <Text style={styles.statValue}>{scanHistory.length}</Text>
               <Text style={styles.statLabel}>Total Scans</Text>
             </View>
 
@@ -271,7 +229,7 @@ export default function ProfileScreen() {
                 <Ionicons name="calendar-outline" size={24} color="#FFF" />
               </View>
               <Text style={styles.statValue}>
-                {lastScanDate ? "Active" : "None"}
+                {scanHistory.length > 0 ? "Active" : "None"}
               </Text>
               <Text style={styles.statLabel}>Last Scan</Text>
             </View>
@@ -293,8 +251,10 @@ export default function ProfileScreen() {
                 </View>
               </View>
               <Switch
-                value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
+                value={settings.notificationsEnabled}
+                onValueChange={(value) =>
+                  updateSettings({ notificationsEnabled: value })
+                }
                 trackColor={{ false: "#E0E0E0", true: "#FF8E6E" }}
                 thumbColor="#FFF"
               />
@@ -311,8 +271,10 @@ export default function ProfileScreen() {
                 </View>
               </View>
               <Switch
-                value={darkModeEnabled}
-                onValueChange={setDarkModeEnabled}
+                value={settings.darkModeEnabled}
+                onValueChange={(value) =>
+                  updateSettings({ darkModeEnabled: value })
+                }
                 trackColor={{ false: "#E0E0E0", true: "#FF8E6E" }}
                 thumbColor="#FFF"
               />

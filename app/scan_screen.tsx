@@ -25,7 +25,7 @@ import { MaterialIcons, Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { Colors } from "@/constants/Colors";
-import { saveScanToHistory } from "@/utils/storage-utils";
+import { useScanStore } from "@/stores";
 import { getSkinConditionAnalysis } from "@/services/geminiService";
 import EnhancedLoadingOverlay from "@/components/EnhancedLoadingOverlay";
 
@@ -69,6 +69,8 @@ const fallbackAnalysisResult = {
 };
 
 export default function ScanScreen() {
+  const { addScanResult, setCurrentScan, setProcessing, setError } =
+    useScanStore();
   const [facing, setFacing] = useState<CameraType>("back");
   const [flash, setFlash] = useState<FlashMode>("off");
   const [permission, requestPermission] = useCameraPermissions();
@@ -142,15 +144,20 @@ export default function ScanScreen() {
         };
 
         setLoadingMessage("Saving results...");
-        await saveScanToHistory(
-          capturedImage,
-          finalResult.condition,
-          finalResult.confidence,
-          finalResult.severity,
-          finalResult.description,
-          finalResult.symptoms,
-          finalResult.recommendations
-        );
+        // Create scan result object
+        const scanResult = {
+          id: `scan_${Date.now()}`,
+          imageUri: capturedImage,
+          condition: finalResult.condition,
+          confidence: finalResult.confidence,
+          severity: finalResult.severity,
+          date: Date.now(),
+          description: finalResult.description,
+          symptoms: finalResult.symptoms,
+          recommendations: finalResult.recommendations,
+        };
+
+        addScanResult(scanResult);
 
         if (isMounted) {
           // First hide the loading overlay

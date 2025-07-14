@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Animated,
   StatusBar,
+  ImageBackground,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -18,24 +19,24 @@ const { width, height } = Dimensions.get("window");
 export default function WelcomeScreen() {
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
   useEffect(() => {
     const animations = [
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 1000,
+        duration: 1200,
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 800,
+        duration: 1000,
         useNativeDriver: true,
       }),
       Animated.timing(scaleAnim, {
         toValue: 1,
-        duration: 600,
+        duration: 800,
         useNativeDriver: true,
       }),
     ];
@@ -51,149 +52,97 @@ export default function WelcomeScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      <LinearGradient
-        colors={["#FF8E6E", "#FF6B4A", "#FF4A2C"]}
-        style={styles.background}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+      <ImageBackground
+        source={require("@/assets/images/welcome.jpg")}
+        style={styles.backgroundImage}
+        resizeMode="cover"
       >
-        {/* Floating Elements */}
-        <Animated.View
-          style={[
-            styles.floatingElement,
-            styles.floatingElement1,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
+        {/* Gradient Overlay - Darker at bottom */}
+        <LinearGradient
+          colors={[
+            "rgba(0, 0, 0, 0.1)",
+            "rgba(0, 0, 0, 0.3)",
+            "rgba(0, 0, 0, 0.6)",
+            "rgba(0, 0, 0, 0.8)",
           ]}
-        />
-        <Animated.View
-          style={[
-            styles.floatingElement,
-            styles.floatingElement2,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
-        />
-        <Animated.View
-          style={[
-            styles.floatingElement,
-            styles.floatingElement3,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
-        />
-
-        {/* Main Content */}
-        <View style={styles.content}>
-          <Animated.View
-            style={[
-              styles.logoContainer,
-              {
-                opacity: fadeAnim,
-                transform: [{ scale: scaleAnim }],
-              },
-            ]}
-          >
-            <LinearGradient
-              colors={["rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.1)"]}
-              style={styles.logoBackground}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <Ionicons name="scan-outline" size={80} color="white" />
-            </LinearGradient>
-          </Animated.View>
-
-          <Animated.View
-            style={[
-              styles.textContainer,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }],
-              },
-            ]}
-          >
-            <ThemedText style={styles.appName}>DermaScan</ThemedText>
-            <ThemedText style={styles.tagline}>
-              AI-Powered Skin Health
-            </ThemedText>
-            <ThemedText style={styles.description}>
-              Advanced skin analysis powered by artificial intelligence. Get
-              instant insights and professional recommendations for your skin
-              health.
-            </ThemedText>
-          </Animated.View>
-
-          <Animated.View
-            style={[
-              styles.featuresContainer,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }],
-              },
-            ]}
-          >
-            <View style={styles.featureItem}>
-              <Ionicons name="checkmark-circle" size={24} color="white" />
-              <ThemedText style={styles.featureText}>
-                Instant AI Analysis
-              </ThemedText>
-            </View>
-            <View style={styles.featureItem}>
-              <Ionicons name="checkmark-circle" size={24} color="white" />
-              <ThemedText style={styles.featureText}>
-                Medical-Grade Accuracy
-              </ThemedText>
-            </View>
-            <View style={styles.featureItem}>
-              <Ionicons name="checkmark-circle" size={24} color="white" />
-              <ThemedText style={styles.featureText}>
-                Expert Recommendations
-              </ThemedText>
-            </View>
-          </Animated.View>
-        </View>
-
-        {/* Bottom Section */}
-        <Animated.View
-          style={[
-            styles.bottomSection,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
+          style={styles.gradientOverlay}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
         >
-          <TouchableOpacity
-            style={styles.getStartedButton}
-            onPress={handleGetStarted}
-            activeOpacity={0.8}
+          {/* Top Section - Logo and App Name */}
+          <Animated.View
+            style={[
+              styles.topSection,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
           >
-            <LinearGradient
-              colors={["#FF8E6E", "#FF6B4A"]}
-              style={styles.buttonGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
+            <Animated.View
+              style={[
+                styles.logoContainer,
+                {
+                  transform: [{ scale: scaleAnim }],
+                },
+              ]}
             >
-              <ThemedText style={styles.buttonText}>Get Started</ThemedText>
-              <Ionicons name="arrow-forward" size={20} color="white" />
-            </LinearGradient>
-          </TouchableOpacity>
+              <View style={styles.logoBackground}>
+                <Ionicons name="scan-outline" size={60} color="white" />
+              </View>
+            </Animated.View>
 
-          <View style={styles.termsContainer}>
-            <ThemedText style={styles.termsText}>
-              By continuing, you agree to our Terms of Service and Privacy
-              Policy
-            </ThemedText>
-          </View>
-        </Animated.View>
-      </LinearGradient>
+            <Animated.View
+              style={[
+                styles.appNameContainer,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }],
+                },
+              ]}
+            >
+              <ThemedText style={styles.appName}>DermaScan</ThemedText>
+              <ThemedText style={styles.tagline}>
+                AI-Powered Skin Health
+              </ThemedText>
+            </Animated.View>
+          </Animated.View>
+
+          {/* Bottom Section - Button and Terms */}
+          <Animated.View
+            style={[
+              styles.bottomSection,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.getStartedButton}
+              onPress={handleGetStarted}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={["#FF8E6E", "#FF6B4A"]}
+                style={styles.buttonGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <ThemedText style={styles.buttonText}>Get Started</ThemedText>
+                <Ionicons name="arrow-forward" size={20} color="white" />
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <View style={styles.termsContainer}>
+              <ThemedText style={styles.termsText}>
+                By continuing, you agree to our Terms of Service and Privacy
+                Policy
+              </ThemedText>
+            </View>
+          </Animated.View>
+        </LinearGradient>
+      </ImageBackground>
     </View>
   );
 }
@@ -202,46 +151,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  background: {
+  backgroundImage: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+  },
+  gradientOverlay: {
     flex: 1,
     justifyContent: "space-between",
   },
-  floatingElement: {
-    position: "absolute",
-    borderRadius: 50,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-  },
-  floatingElement1: {
-    width: 100,
-    height: 100,
-    top: "15%",
-    left: "10%",
-  },
-  floatingElement2: {
-    width: 60,
-    height: 60,
-    top: "25%",
-    right: "15%",
-  },
-  floatingElement3: {
-    width: 80,
-    height: 80,
-    bottom: "30%",
-    left: "20%",
-  },
-  content: {
+  topSection: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
-    paddingHorizontal: 40,
+    paddingTop: 120,
   },
   logoContainer: {
-    marginBottom: 40,
+    marginBottom: 20,
   },
   logoBackground: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -252,44 +184,32 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 8,
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
-  textContainer: {
+  appNameContainer: {
     alignItems: "center",
-    marginBottom: 40,
   },
   appName: {
-    fontSize: 42,
+    fontSize: 48,
     fontWeight: "bold",
     color: "white",
     marginBottom: 8,
+    paddingTop: 24,
     textAlign: "center",
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+    includeFontPadding: false,
   },
   tagline: {
-    fontSize: 20,
+    fontSize: 18,
     color: "rgba(255, 255, 255, 0.9)",
-    marginBottom: 16,
     textAlign: "center",
-  },
-  description: {
-    fontSize: 16,
-    color: "rgba(255, 255, 255, 0.8)",
-    textAlign: "center",
-    lineHeight: 24,
-    maxWidth: 320,
-  },
-  featuresContainer: {
-    width: "100%",
-    maxWidth: 300,
-  },
-  featureItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  featureText: {
-    color: "white",
-    fontSize: 16,
-    marginLeft: 12,
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    includeFontPadding: false,
   },
   bottomSection: {
     paddingHorizontal: 40,
@@ -325,9 +245,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   termsText: {
-    color: "rgba(255, 255, 255, 0.7)",
+    color: "rgba(255, 255, 255, 0.8)",
     fontSize: 12,
     textAlign: "center",
     lineHeight: 18,
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });

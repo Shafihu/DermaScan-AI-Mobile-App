@@ -16,17 +16,17 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuthStore } from "@/stores";
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const { signup, isLoading, error, clearError } = useAuthStore();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
 
   // Animation values
@@ -56,6 +56,14 @@ export default function SignUpScreen() {
     Animated.parallel(animations).start();
   }, []);
 
+  // Show error alert when error state changes
+  useEffect(() => {
+    if (error) {
+      Alert.alert("Error", error);
+      clearError();
+    }
+  }, [error, clearError]);
+
   const validateForm = () => {
     if (!fullName.trim()) {
       Alert.alert("Error", "Please enter your full name");
@@ -83,23 +91,12 @@ export default function SignUpScreen() {
   const handleSignUp = async () => {
     if (!validateForm()) return;
 
-    setIsLoading(true);
-
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Store user session and data
-      await AsyncStorage.setItem("@DermaScanAI:userSession", "true");
-      await AsyncStorage.setItem("@DermaScanAI:userEmail", email);
-      await AsyncStorage.setItem("@DermaScanAI:fullName", fullName);
-
+      await signup(fullName, email, password);
       // Navigate to main app
       router.replace("/(tabs)");
     } catch (error) {
-      Alert.alert("Error", "Sign up failed. Please try again.");
-    } finally {
-      setIsLoading(false);
+      // Error is handled by the store
     }
   };
 

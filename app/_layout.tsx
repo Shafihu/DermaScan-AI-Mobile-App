@@ -7,16 +7,33 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
+import { useEffect } from "react";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { OnboardingUtils } from "@/utils/onboarding-utils";
 import NavigationGuard from "@/components/NavigationGuard";
+import { networkService } from "@/services/networkService";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
+
+  // Initialize network service and check auth status
+  useEffect(() => {
+    const initializeApp = async () => {
+      // Initialize network monitoring
+      networkService.initialize();
+
+      // Check authentication status
+      const { checkAuthStatus } = useAuthStore.getState();
+      await checkAuthStatus();
+    };
+
+    initializeApp();
+  }, []);
 
   if (!loaded) {
     // Async font loading only occurs in development.

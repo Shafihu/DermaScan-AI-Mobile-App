@@ -10,6 +10,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { OnboardingUtils } from "@/utils/onboarding-utils";
+import NavigationGuard from "@/components/NavigationGuard";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -24,25 +25,52 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="welcome" options={{ headerShown: false }} />
-        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-        <Stack.Screen name="permissions" options={{ headerShown: false }} />
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="scan_screen" options={{ headerShown: false }} />
-        <Stack.Screen name="result_screen" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="dermatologist_profile"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="history_details_screen"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen name="+not-found" />
-      </Stack>
+      <NavigationGuard>
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="welcome"
+            options={{
+              headerShown: false,
+              gestureEnabled: false,
+            }}
+          />
+          <Stack.Screen
+            name="onboarding"
+            options={{
+              headerShown: false,
+              gestureEnabled: false,
+            }}
+          />
+          <Stack.Screen name="permissions" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="auth"
+            options={{
+              headerShown: false,
+              gestureEnabled: false,
+            }}
+          />
+          <Stack.Screen
+            name="(tabs)"
+            options={{
+              headerShown: false,
+              gestureEnabled: false,
+              headerBackVisible: false,
+            }}
+          />
+          <Stack.Screen name="scan_screen" options={{ headerShown: false }} />
+          <Stack.Screen name="result_screen" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="dermatologist_profile"
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="history_details_screen"
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+      </NavigationGuard>
       <StatusBar style="auto" />
     </ThemeProvider>
   );

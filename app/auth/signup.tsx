@@ -17,6 +17,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/stores";
+import { handleSignupSuccess } from "@/utils/navigation-utils";
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -93,8 +94,8 @@ export default function SignUpScreen() {
 
     try {
       await signup(fullName, email, password);
-      // Navigate to main app
-      router.replace("/(tabs)");
+      // Navigate to main app and reset navigation stack
+      handleSignupSuccess();
     } catch (error) {
       // Error is handled by the store
     }

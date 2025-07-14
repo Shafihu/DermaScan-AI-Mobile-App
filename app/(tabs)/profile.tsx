@@ -17,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore, useScanStore, useAppStore } from "@/stores";
+import { handleLogout } from "@/utils/navigation-utils";
 
 export default function ProfileScreen() {
   const { user, updateProfile } = useAuthStore();
@@ -108,10 +109,7 @@ export default function ProfileScreen() {
         style: "destructive",
         onPress: async () => {
           // Clear user data and navigate to welcome screen
-          // Use logout from auth store
-          const { logout } = useAuthStore.getState();
-          await logout();
-          // router.replace("/welcome");
+          await handleLogout();
         },
       },
     ]);

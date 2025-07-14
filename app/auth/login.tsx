@@ -16,6 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/stores";
+import { handleLoginSuccess } from "@/utils/navigation-utils";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -67,8 +68,8 @@ export default function LoginScreen() {
 
     try {
       await login(email, password);
-      // Navigate to main app
-      router.replace("/(tabs)");
+      // Navigate to main app and reset navigation stack
+      handleLoginSuccess();
     } catch (error) {
       // Error is handled by the store
     }

@@ -19,15 +19,22 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore, useScanStore, useAppStore } from "@/stores";
 import { handleLogout } from "@/utils/navigation-utils";
 import { runApiTests } from "@/services/apiTest";
+import { apiService } from "@/services/apiService";
 
 export default function ProfileScreen() {
   const { user, updateProfile } = useAuthStore();
   const { scanHistory } = useScanStore();
   const { settings, updateSettings } = useAppStore();
 
-  // Local state
+  // Local state for editing
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [localUserData, setLocalUserData] = useState({
+    fullName: "",
+    email: "",
+    bio: "",
+    profileImage: "",
+  });
 
   // Load user data
   useEffect(() => {
@@ -35,7 +42,16 @@ export default function ProfileScreen() {
       try {
         setIsLoading(true);
 
-        // Data is now loaded from stores automatically
+        // Initialize local data with user data
+        if (user) {
+          setLocalUserData({
+            fullName: user.fullName || "",
+            email: user.email || "",
+            bio: user.bio || "",
+            profileImage: user.profileImage || "",
+          });
+        }
+
         setIsLoading(false);
       } catch (error) {
         console.error("Error loading user data:", error);
@@ -44,18 +60,31 @@ export default function ProfileScreen() {
     };
 
     loadUserData();
-  }, []);
+  }, [user]);
+
+  // Update local data when user changes (after successful API update)
+  useEffect(() => {
+    if (user && !isEditing) {
+      setLocalUserData({
+        fullName: user.fullName || "",
+        email: user.email || "",
+        bio: user.bio || "",
+        profileImage: user.profileImage || "",
+      });
+    }
+  }, [user, isEditing]);
 
   // Save user data
   const saveUserData = async () => {
     try {
       setIsLoading(true);
 
-      // Update profile in store
+      // Update profile with local data - backend now handles file uploads directly
       if (user) {
         await updateProfile({
-          fullName: user.fullName,
-          profileImage: user.profileImage,
+          fullName: localUserData.fullName,
+          bio: localUserData.bio,
+          profileImage: localUserData.profileImage,
         });
       }
 
@@ -92,14 +121,28 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        if (user) {
-          await updateProfile({ profileImage: result.assets[0].uri });
-        }
+        setLocalUserData((prev) => ({
+          ...prev,
+          profileImage: result.assets[0].uri,
+        }));
       }
     } catch (error) {
       console.error("Error picking image:", error);
       Alert.alert("Error", "Failed to pick image. Please try again.");
     }
+  };
+
+  const handleCancelEdit = () => {
+    // Reset local data to original user data
+    if (user) {
+      setLocalUserData({
+        fullName: user.fullName || "",
+        email: user.email || "",
+        bio: user.bio || "",
+        profileImage: user.profileImage || "",
+      });
+    }
+    setIsEditing(false);
   };
 
   const handleSignOut = () => {
@@ -137,14 +180,29 @@ export default function ProfileScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Profile</Text>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => (isEditing ? saveUserData() : setIsEditing(true))}
-          >
-            <Text style={styles.editButtonText}>
-              {isEditing ? "Save" : "Edit"}
-            </Text>
-          </TouchableOpacity>
+          {isEditing ? (
+            <View style={styles.editButtonsContainer}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleCancelEdit}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={saveUserData}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => setIsEditing(true)}
+            >
+              <Text style={styles.editButtonText}>Edit</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Profile Section */}
@@ -154,9 +212,13 @@ export default function ProfileScreen() {
             onPress={isEditing ? pickImage : undefined}
             disabled={!isEditing}
           >
-            {user?.profileImage ? (
+            {(isEditing ? localUserData.profileImage : user?.profileImage) ? (
               <Image
-                source={{ uri: user.profileImage }}
+                source={{
+                  uri: isEditing
+                    ? localUserData.profileImage
+                    : user?.profileImage,
+                }}
                 style={styles.profileImage}
               />
             ) : (
@@ -169,15 +231,42 @@ export default function ProfileScreen() {
                 <Ionicons name="camera" size={16} color="#FFF" />
               </View>
             )}
+            {isEditing &&
+              (isEditing ? localUserData.profileImage : user?.profileImage) && (
+                <TouchableOpacity
+                  style={styles.deleteProfileImageButton}
+                  onPress={() => {
+                    Alert.alert(
+                      "Delete Profile Image",
+                      "Are you sure you want to delete your profile image?",
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Delete",
+                          style: "destructive",
+                          onPress: () => {
+                            setLocalUserData((prev) => ({
+                              ...prev,
+                              profileImage: "",
+                            }));
+                          },
+                        },
+                      ]
+                    );
+                  }}
+                >
+                  <Ionicons name="trash" size={12} color="#FFF" />
+                </TouchableOpacity>
+              )}
           </TouchableOpacity>
 
           <View style={styles.profileInfo}>
             {isEditing ? (
               <TextInput
                 style={styles.nameInput}
-                value={user?.fullName || ""}
+                value={localUserData.fullName}
                 onChangeText={(text) =>
-                  user && updateProfile({ fullName: text })
+                  setLocalUserData((prev) => ({ ...prev, fullName: text }))
                 }
                 placeholder="Full Name"
                 placeholderTextColor="#999"
@@ -191,8 +280,10 @@ export default function ProfileScreen() {
             {isEditing ? (
               <TextInput
                 style={styles.emailInput}
-                value={user?.email || ""}
-                onChangeText={(text) => user && updateProfile({ email: text })}
+                value={localUserData.email}
+                onChangeText={(text) =>
+                  setLocalUserData((prev) => ({ ...prev, email: text }))
+                }
                 placeholder="Email Address"
                 placeholderTextColor="#999"
                 keyboardType="email-address"
@@ -202,6 +293,23 @@ export default function ProfileScreen() {
               <Text style={styles.emailText}>
                 {user?.email || "Add your email"}
               </Text>
+            )}
+
+            {isEditing ? (
+              <TextInput
+                style={styles.bioInput}
+                value={localUserData.bio}
+                onChangeText={(text) =>
+                  setLocalUserData((prev) => ({ ...prev, bio: text }))
+                }
+                placeholder="Bio (optional)"
+                placeholderTextColor="#999"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            ) : (
+              <Text style={styles.bioText}>{user?.bio || "Add your bio"}</Text>
             )}
           </View>
         </View>
@@ -398,6 +506,30 @@ const styles = StyleSheet.create({
     color: "#FF8E6E",
     fontWeight: "500",
   },
+  editButtonsContainer: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  cancelButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: "#666",
+    fontWeight: "500",
+  },
+  saveButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "#FF8E6E",
+    borderRadius: 8,
+  },
+  saveButtonText: {
+    fontSize: 16,
+    color: "#FFF",
+    fontWeight: "500",
+  },
   profileSection: {
     alignItems: "center",
     paddingHorizontal: 24,
@@ -433,6 +565,19 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: "#FFF",
   },
+  deleteProfileImageButton: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#F44336",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#FFF",
+  },
   profileInfo: {
     alignItems: "center",
     width: "100%",
@@ -466,6 +611,24 @@ const styles = StyleSheet.create({
   emailText: {
     fontSize: 16,
     color: "#666",
+  },
+  bioInput: {
+    fontSize: 14,
+    color: "#333",
+    textAlign: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#FF8E6E",
+    paddingVertical: 8,
+    width: "80%",
+    minHeight: 60,
+    textAlignVertical: "top",
+  },
+  bioText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 8,
+    paddingHorizontal: 20,
   },
   section: {
     paddingHorizontal: 24,

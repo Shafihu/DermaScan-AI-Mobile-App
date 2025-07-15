@@ -4,7 +4,6 @@ import { useAuthStore } from "../stores/useAuthStore";
 // Base API configuration
 const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL || "http://172.20.10.4:5000/api";
-const API_TIMEOUT = 10000; // 10 seconds
 
 // Types for API requests and responses
 export interface LoginRequest {
@@ -29,6 +28,7 @@ export interface AuthResponse {
       updatedAt: string;
       isActive?: boolean;
       lastLoginAt?: string;
+      bio?: string;
     };
     token: string;
   };
@@ -46,9 +46,10 @@ export interface UserProfile {
 }
 
 export interface UpdateProfileRequest {
+  username?: string;
   fullName?: string;
-  email?: string;
   profileImage?: string;
+  bio?: string;
 }
 
 export interface ScanAnalysisRequest {
@@ -91,11 +92,9 @@ export interface ApiError {
 // API Service Class
 class ApiService {
   private baseURL: string;
-  private timeout: number;
 
-  constructor(baseURL: string = API_BASE_URL, timeout: number = API_TIMEOUT) {
+  constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = baseURL;
-    this.timeout = timeout;
   }
 
   private async getAuthToken(): Promise<string | null> {
@@ -143,17 +142,11 @@ class ApiService {
       (headers as Record<string, string>).Authorization = `Bearer ${token}`;
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
     try {
       const response = await fetch(url, {
         ...options,
         headers,
-        signal: controller.signal,
       });
-
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -176,9 +169,6 @@ class ApiService {
       console.log("✅ API Response:", responseData);
       return responseData;
     } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new Error("Request timeout");
-      }
       throw error;
     }
   }
@@ -218,6 +208,72 @@ class ApiService {
     } finally {
       await this.removeAuthToken();
     }
+  }
+
+  async getProfile(): Promise<AuthResponse["data"]["user"]> {
+    return await this.makeRequest<AuthResponse["data"]["user"]>(
+      "/auth/profile"
+    );
+  }
+
+  async updateProfile(
+    updates: UpdateProfileRequest
+  ): Promise<AuthResponse["data"]["user"]> {
+    console.log("📝 Attempting profile update with:", updates);
+
+    // Check if we have a local file image to upload
+    const hasLocalImage =
+      updates.profileImage && updates.profileImage.startsWith("file://");
+
+    if (hasLocalImage) {
+      // Use FormData for file upload
+      const formData = new FormData();
+
+      // Add the image file
+      const imageFile = {
+        uri: updates.profileImage,
+        type: "image/jpeg",
+        name: "profile-image.jpg",
+      } as any;
+      formData.append("profileImage", imageFile);
+
+      // Add other fields as text
+      if (updates.fullName) formData.append("fullName", updates.fullName);
+      if (updates.bio) formData.append("bio", updates.bio);
+      if (updates.username) formData.append("username", updates.username);
+
+      const response = await this.makeRequest<AuthResponse["data"]["user"]>(
+        "/auth/profile",
+        {
+          method: "PUT",
+          headers: {}, // Let browser set Content-Type for FormData
+          body: formData,
+        }
+      );
+
+      console.log("📝 Profile update response:", response);
+      return response;
+    } else {
+      // Use JSON for regular updates
+      const response = await this.makeRequest<AuthResponse["data"]["user"]>(
+        "/auth/profile",
+        {
+          method: "PUT",
+          body: JSON.stringify(updates),
+        }
+      );
+
+      console.log("📝 Profile update response:", response);
+      return response;
+    }
+  }
+
+  async deleteProfileImage(): Promise<void> {
+    console.log("🗑️ Deleting profile image...");
+    await this.makeRequest("/auth/profile/image", {
+      method: "DELETE",
+    });
+    console.log("🗑️ Profile image deleted successfully");
   }
 
   // Scan analysis endpoints

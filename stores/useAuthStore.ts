@@ -13,6 +13,7 @@ export interface User {
   email: string;
   fullName: string;
   profileImage?: string;
+  bio?: string;
 }
 
 export interface AuthState {
@@ -59,6 +60,7 @@ export const useAuthStore = create<AuthState>()(
               email: response.data.user.email,
               fullName: response.data.user.fullName,
               profileImage: response.data.user.profileImage,
+              bio: response.data.user.bio ?? "",
             };
 
             set({
@@ -113,6 +115,7 @@ export const useAuthStore = create<AuthState>()(
               email: response.data.user.email,
               fullName: response.data.user.fullName,
               profileImage: response.data.user.profileImage,
+              bio: response.data.user.bio ?? "",
             };
 
             set({
@@ -182,11 +185,16 @@ export const useAuthStore = create<AuthState>()(
           if (isOnline) {
             // Use API service
             const response = await apiService.updateProfile(updates);
+
+            // The API response has a nested structure with data.user
+            const userData = (response as any).data?.user || response;
+
             const updatedUser: User = {
-              id: response.id,
-              email: response.email,
-              fullName: response.fullName,
-              profileImage: response.profileImage,
+              id: userData._id,
+              email: userData.email,
+              fullName: userData.fullName,
+              profileImage: userData.profileImage,
+              bio: userData.bio ?? "",
             };
 
             set({ user: updatedUser });
@@ -195,7 +203,7 @@ export const useAuthStore = create<AuthState>()(
             set({ user: { ...user, ...updates } });
           }
         } catch (error) {
-          console.error("Error updating profile:", error);
+          console.log("ℹ️ Profile update failed, keeping local changes");
           // Fallback to local update
           set({ user: { ...user, ...updates } });
         }
@@ -211,10 +219,11 @@ export const useAuthStore = create<AuthState>()(
               try {
                 const profile = await apiService.getProfile();
                 const user: User = {
-                  id: profile.id,
+                  id: profile._id,
                   email: profile.email,
                   fullName: profile.fullName,
                   profileImage: profile.profileImage,
+                  bio: profile.bio ?? "",
                 };
                 set({ user, isAuthenticated: true });
               } catch (error) {
